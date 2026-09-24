@@ -92,6 +92,14 @@ $$;
 revoke all on function public.is_administrator() from public;
 grant execute on function public.is_administrator() to authenticated;
 
+drop policy if exists "Administrators can read all profiles" on public.profiles;
+
+create policy "Administrators can read all profiles"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id or public.is_administrator());
+
 drop policy if exists "Administrators can update profiles" on public.profiles;
 
 create policy "Administrators can update profiles"
