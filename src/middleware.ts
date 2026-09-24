@@ -11,6 +11,7 @@ const modulePrefixes = [
   "/finance",
   "/hr",
   "/operations",
+  "/ops",
   "/admin",
 ];
 
