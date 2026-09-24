@@ -5,19 +5,19 @@ import { NextResponse } from "next/server";
 import { getSupabaseEnvironment } from "@/lib/env";
 import type { Database } from "@/lib/types/database.types";
 
-const protectedPrefixes = [
-  "/admin",
+const modulePrefixes = [
   "/crm",
-  "/finance",
   "/inventory",
+  "/finance",
   "/hr",
   "/operations",
+  "/admin",
 ];
 
 function isProtectedRoute(pathname: string): boolean {
-  return protectedPrefixes.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
+  return pathname === "/" || modulePrefixes.some((prefix) => (
+    pathname === prefix || pathname.startsWith(`${prefix}/`)
+  ));
 }
 
 function copyCookies(source: NextResponse, target: NextResponse): NextResponse {
@@ -28,12 +28,9 @@ function copyCookies(source: NextResponse, target: NextResponse): NextResponse {
   return target;
 }
 
-export async function updateSession(
-  request: NextRequest,
-): Promise<NextResponse> {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, anonKey } = getSupabaseEnvironment();
-
   const supabase = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
@@ -45,7 +42,6 @@ export async function updateSession(
         });
 
         response = NextResponse.next({ request });
-
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options);
         });
@@ -56,14 +52,15 @@ export async function updateSession(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   const { pathname, search } = request.nextUrl;
   const isLoginRoute = pathname === "/login";
-  const requiresAuthentication = pathname === "/" || isProtectedRoute(pathname);
 
-  if (!user && requiresAuthentication) {
+  if (!user) {
+    if (!isProtectedRoute(pathname)) {
+      return response;
+    }
+
     const loginUrl = request.nextUrl.clone();
-
     loginUrl.pathname = "/login";
     loginUrl.search = "";
     loginUrl.searchParams.set("redirectTo", `${pathname}${search}`);
@@ -71,14 +68,53 @@ export async function updateSession(
     return copyCookies(response, NextResponse.redirect(loginUrl));
   }
 
-  if (user && isLoginRoute) {
+  if (isLoginRoute) {
     const dashboardUrl = request.nextUrl.clone();
-
     dashboardUrl.pathname = "/";
     dashboardUrl.search = "";
 
     return copyCookies(response, NextResponse.redirect(dashboardUrl));
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, department")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role = profile?.role ?? "empleado";
+  const departmentPath = profile?.department ? `/${profile.department}` : null;
+  const isModuleRoute = modulePrefixes.some((prefix) => (
+    pathname === prefix || pathname.startsWith(`${prefix}/`)
+  ));
+
+  const redirectToDashboard = () => {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/";
+    dashboardUrl.search = "";
+    return copyCookies(response, NextResponse.redirect(dashboardUrl));
+  };
+
+  if (role === "manager" && (pathname === "/admin" || pathname.startsWith("/admin/"))) {
+    return redirectToDashboard();
+  }
+
+  if (
+    role === "empleado"
+    && isModuleRoute
+    && pathname !== "/"
+    && (!departmentPath || (
+      pathname !== departmentPath && !pathname.startsWith(`${departmentPath}/`)
+    ))
+  ) {
+    return redirectToDashboard();
+  }
+
   return response;
 }
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map)$).*)",
+  ],
+};

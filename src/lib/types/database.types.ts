@@ -6,6 +6,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type AppRole = "administrador" | "manager" | "empleado";
+export type Department =
+  | "crm"
+  | "inventory"
+  | "finance"
+  | "hr"
+  | "operations";
+
 export type Database = {
   public: {
     Tables: {
@@ -14,21 +22,24 @@ export type Database = {
           id: string;
           email: string | null;
           full_name: string | null;
-          role: "admin" | "user";
+          role: AppRole;
+          department: Department | null;
           created_at: string;
         };
         Insert: {
           id: string;
           email?: string | null;
           full_name?: string | null;
-          role?: "admin" | "user";
+          role?: AppRole;
+          department?: Department | null;
           created_at?: string;
         };
         Update: {
           id?: string;
           email?: string | null;
           full_name?: string | null;
-          role?: "admin" | "user";
+          role?: AppRole;
+          department?: Department | null;
           created_at?: string;
         };
         Relationships: [];
@@ -37,7 +48,7 @@ export type Database = {
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
-      user_role: "admin" | "user";
+      app_role: AppRole;
     };
     CompositeTypes: Record<string, never>;
   };

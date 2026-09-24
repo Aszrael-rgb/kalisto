@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 
 import { logout } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/server";
+import type { AppRole } from "@/lib/types/database.types";
 
 type NavigationItem = {
   href: string;
@@ -42,6 +43,29 @@ export async function Sidebar() {
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, department")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const role: AppRole = profile?.role ?? "empleado";
+  const visibleNavigationItems = navigationItems.filter(({ href }) => {
+    if (href === "/") {
+      return true;
+    }
+
+    if (role === "administrador") {
+      return true;
+    }
+
+    if (role === "manager") {
+      return href !== "/admin";
+    }
+
+    return profile?.department !== null && href === `/${profile?.department}`;
+  });
+
   return (
     <aside className="flex min-h-screen w-full max-w-72 flex-col bg-slate-950 px-5 py-6 text-slate-300">
       <Link className="flex items-center gap-3 px-3" href="/">
@@ -57,7 +81,7 @@ export async function Sidebar() {
       <nav aria-label="Navegación principal" className="mt-10 flex-1">
         <p className="px-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">Módulos</p>
         <ul className="mt-4 space-y-1">
-          {navigationItems.map(({ href, label, icon: Icon }) => (
+          {visibleNavigationItems.map(({ href, label, icon: Icon }) => (
             <li key={href}>
               <Link
                 className="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-white/10 hover:text-white"
