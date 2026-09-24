@@ -7,6 +7,7 @@ import {
   LogOut,
   Settings,
   ShieldCheck,
+  Megaphone,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +32,7 @@ const navigationItems: NavigationItem[] = [
   { href: "/hr", label: "Recursos Humanos", icon: BriefcaseBusiness },
   { href: "/operations", label: "Operaciones", icon: ChartNoAxesCombined },
   { href: "/admin", label: "Administración", icon: ShieldCheck },
+  { href: "/marketing", label: "Marketing", icon: Megaphone },
 ];
 
 export async function Sidebar() {

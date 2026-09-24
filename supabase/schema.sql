@@ -31,7 +31,7 @@ alter table public.profiles
 
 alter table public.profiles
   add constraint profiles_department_check
-  check (department is null or department in ('crm', 'inventory', 'finance', 'hr', 'operations'));
+  check (department is null or department in ('crm', 'inventory', 'finance', 'hr', 'operations', 'marketing'));
 
 alter table public.profiles
   alter column role drop default;

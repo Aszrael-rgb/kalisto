@@ -12,6 +12,7 @@ const modulePrefixes = [
   "/hr",
   "/operations",
   "/ops",
+  "/marketing",
   "/admin",
 ];
 

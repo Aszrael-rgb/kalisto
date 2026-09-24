@@ -9,6 +9,7 @@ const departmentLabels: Record<Department, string> = {
   finance: "Finanzas",
   hr: "Recursos Humanos",
   operations: "Operaciones",
+  marketing: "Marketing",
 };
 
 export default async function DashboardPage() {

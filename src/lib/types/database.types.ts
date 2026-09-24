@@ -12,7 +12,8 @@ export type Department =
   | "inventory"
   | "finance"
   | "hr"
-  | "operations";
+  | "operations"
+  | "marketing";
 
 export type CustomerStatus = "lead" | "cliente" | "inactivo";
 export type DealStage = "prospeccion" | "propuesta" | "ganado" | "perdido";
@@ -24,6 +25,35 @@ export type LeaveStatus = "pendiente" | "aprobado" | "rechazado";
 export type ProjectStatus = "planificacion" | "en_progreso" | "pausado" | "completado";
 export type TaskPriority = "baja" | "media" | "alta" | "urgente";
 export type TaskStatus = "pendiente" | "en_progreso" | "revision" | "completado";
+export type LeadStage = "prospeccion" | "negociacion" | "cierre";
+export type QuoteStatus = "borrador" | "enviada" | "aceptada" | "rechazada";
+export type InteractionType = "llamada" | "email" | "reunion" | "nota";
+export type StockMovementType = "entrada" | "salida";
+export type CampaignStatus = "borrador" | "activa" | "pausada" | "finalizada";
+
+type TableDefinition<Row, Insert = Partial<Row>, Update = Partial<Row>> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Update;
+  Relationships: [];
+};
+
+type EnterpriseTables = {
+  system_settings: TableDefinition<{ key: string; value: Json; updated_at: string; updated_by: string | null }, { key: string; value?: Json; updated_at?: string; updated_by?: string | null }>;
+  system_audit_logs: TableDefinition<{ id: string; actor_id: string; action: string; entity: string; entity_id: string | null; metadata: Json; created_at: string }>;
+  crm_leads: TableDefinition<{ id: string; name: string; email: string | null; phone: string | null; company: string | null; stage: LeadStage; source: string | null; assigned_to: string | null; created_at: string; created_by: string }, { name: string; email?: string | null; phone?: string | null; company?: string | null; stage?: LeadStage; source?: string | null; assigned_to?: string | null; created_by: string }>;
+  crm_quotes: TableDefinition<{ id: string; customer_id: string; quote_number: string; subtotal: number; tax_amount: number; total: number; status: QuoteStatus; created_at: string; created_by: string }>;
+  crm_interactions: TableDefinition<{ id: string; customer_id: string; type: InteractionType; notes: string; occurred_at: string; created_by: string }>;
+  inv_suppliers: TableDefinition<{ id: string; name: string; email: string | null; phone: string | null; created_at: string }, { name: string; email?: string | null; phone?: string | null }>;
+  inv_products: TableDefinition<{ id: string; sku: string; name: string; description: string | null; supplier_id: string | null; stock_actual: number; stock_minimo: number; unit_cost: number }>;
+  inv_movements: TableDefinition<{ id: string; product_id: string; supplier_id: string | null; type: StockMovementType; quantity: number; notes: string | null; created_by: string; created_at: string }>;
+  fin_transactions: TableDefinition<{ id: string; type: TransactionType; amount: number; category: string; description: string | null; transaction_date: string; created_by: string }>;
+  fin_invoices: TableDefinition<{ id: string; customer_id: string | null; invoice_number: string; subtotal: number; tax_amount: number; total: number; status: InvoiceStatus; issued_at: string; due_date: string; created_by: string }>;
+  hr_employees_data: TableDefinition<{ user_id: string; job_title: string | null; phone: string | null; start_date: string | null; emergency_contact: string | null; updated_at: string }>;
+  ops_milestones: TableDefinition<{ id: string; project_id: string; name: string; due_date: string | null; completed: boolean }>;
+  mkt_campaigns: TableDefinition<{ id: string; name: string; budget: number; platform: string; status: CampaignStatus; created_by: string; created_at: string }>;
+  mkt_performance: TableDefinition<{ id: string; campaign_id: string; leads_count: number; conversions_count: number; spend: number; measured_at: string }>;
+};
 
 export type Database = {
   public: {
@@ -121,11 +151,15 @@ export type Database = {
         Update: { id?: string; project_id?: string; assigned_to?: string | null; title?: string; description?: string | null; priority?: TaskPriority; status?: TaskStatus; due_date?: string | null };
         Relationships: [];
       };
-    };
+    } & EnterpriseTables;
     Views: Record<string, never>;
     Functions: {
       adjust_inventory_stock: {
         Args: { p_product_id: string; p_quantity: number; p_type: MovementType; p_reason: string | null };
+        Returns: undefined;
+      };
+      audit_change: {
+        Args: { action_name: string; entity_name: string; entity_uuid: string | null; details: Json };
         Returns: undefined;
       };
     };

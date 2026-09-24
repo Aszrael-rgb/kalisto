@@ -17,6 +17,7 @@ const departmentLabels: Record<Department, string> = {
   finance: "Finanzas",
   hr: "Recursos Humanos",
   operations: "Operaciones",
+  marketing: "Marketing",
 };
 
 type AccessValues = Pick<UserProfile, "role" | "department">;
