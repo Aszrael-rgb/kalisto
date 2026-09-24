@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+
+import { ThemeProvider } from "@/components/theme/theme-provider";
+import { CommandPalette } from "@/components/ui/CommandPalette";
+import { DynamicIsland } from "@/components/ui/DynamicIsland";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,7 +14,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider>
+          <CommandPalette />
+          <DynamicIsland />
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
